@@ -1,4 +1,4 @@
-package io.proj3ct.CryptoBot;
+package isthatkirill.CryptoBot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,12 +1,14 @@
-package io.proj3ct.CryptoBot.service;
+package isthatkirill.CryptoBot.service;
 
-import io.proj3ct.CryptoBot.config.BotConfig;
+import isthatkirill.CryptoBot.config.BotConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+@Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
 
@@ -40,6 +42,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     break;
                 default:
                     sendMessage(chatId, "Sorry, there is no such command! ");
+                    log.info("[no command] Replied to user " + update.getMessage().getChat().getFirstName());
 
             }
         }
@@ -48,7 +51,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void startCommandReceived(long chatId, String name)  {
         String answer = "Hi, " + name + " , nice to meet you!";
+        log.info("[/start] Received from user " + name);
         sendMessage(chatId, answer);
+        log.info("[/start] Replied to user " + name);
 
     }
 
@@ -60,7 +65,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-
+            log.error("Error occurred: " + e.getMessage());
         }
     }
 

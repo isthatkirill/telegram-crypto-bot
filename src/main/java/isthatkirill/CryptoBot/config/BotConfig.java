@@ -1,4 +1,4 @@
-package io.proj3ct.CryptoBot.config;
+package isthatkirill.CryptoBot.config;
 
 
 import lombok.Data;

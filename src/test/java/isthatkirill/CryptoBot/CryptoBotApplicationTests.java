@@ -1,4 +1,4 @@
-package io.proj3ct.CryptoBot;
+package isthatkirill.CryptoBot;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
