@@ -13,9 +13,9 @@ public class Parser {
     public Parser() {
     }
 
-    public String mostPopularCrypto () {
+    public String mostPopularCrypto (int quantity) {
 
-        String textToSend = "TOP-100 cryptocurrencies statistics: \n\n";
+        String textToSend = "";
 
         try {
             Document document = Jsoup.connect("https://www.coingecko.com/").get();
@@ -27,7 +27,7 @@ public class Parser {
             ArrayList<String> price = new ArrayList<String>(Arrays.asList((document.getElementsByAttribute("data" +
                     "-coin-symbol").text()).split("  ")));
 
-            for (int i = 0; i < name.size(); i++) {
+            for (int i = 0; i < quantity; i++) {
                 textToSend = textToSend + name.get(i) + ": " + price.get(i) + "\n";
             }
 

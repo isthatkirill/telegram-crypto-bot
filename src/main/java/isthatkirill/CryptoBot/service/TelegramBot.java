@@ -30,11 +30,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         parser = new Parser();
         this.config = config;
         List<BotCommand> listOfCommands = new ArrayList<>();
-        parser.mostPopularCrypto();
-
 
         listOfCommands.add(new BotCommand("/start", "Get a welcome message"));
-        listOfCommands.add(new BotCommand("/top100", "Show statistics on popular crypto"));
+        listOfCommands.add(new BotCommand("/top10", "Show statistics on 10 most popular crypto"));
+        listOfCommands.add(new BotCommand("/showall", "Show statistics on top-100 crypto"));
         listOfCommands.add(new BotCommand("/deletedata", "delete your data"));
         listOfCommands.add(new BotCommand("/help", "about commands"));
         listOfCommands.add(new BotCommand("/settings", "set your preferences"));
@@ -66,41 +65,30 @@ public class TelegramBot extends TelegramLongPollingBot {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
 
-            switch (messageText) {
-                case "/start":
-                    startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
-                    break;
+            if ("/start".equals(messageText)) {
+                startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
 
-                case "/help":
-                    sendMessage(chatId, HELP_TEXT);
-                    log.info("[/help] Replied to user " + update.getMessage().getChat().getFirstName());
-                    break;
+            } else if ("/help".equals(messageText)) {
+                sendMessage(chatId, HELP_TEXT);
+                log.info("[/help] Replied to user " + update.getMessage().getChat().getFirstName());
 
-                case "/top100":
-                    sendMessage(chatId, "Enter quantity of cryptocurrencies: ");
-                    //onUpdateReceivedEmbedded()
-                    sendMessage(chatId, parser.mostPopularCrypto());
-                    log.info("[/top100] Replied to user " + update.getMessage().getChat().getFirstName());
-                    break;
+            } else if ("/showall".equals(messageText)) {
+                sendMessage(chatId, parser.mostPopularCrypto(100));
+                log.info("[/showAll] Replied to user " + update.getMessage().getChat().getFirstName());
 
-                default:
-                    sendMessage(chatId, "Sorry, there is no such command! ");
-                    log.info("[no command] Replied to user " + update.getMessage().getChat().getFirstName());
+            } else if ("/top10".equals(messageText)) {
+                sendMessage(chatId, parser.mostPopularCrypto(10));
+                log.info("[/top10] Replied to user " + update.getMessage().getChat().getFirstName());
 
+            } else {
+                sendMessage(chatId, "Sorry, there is no such command! ");
+                log.info("[no command] Replied to user " + update.getMessage().getChat().getFirstName());
             }
         }
     }
 
-    public String onUpdateReceivedEmbedded(Update update) {
-        String embeddedText = "";
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            embeddedText = update.getMessage().getText();
-        }
-        return embeddedText;
-    }
-
     private void startCommandReceived(long chatId, String name)  {
-        String answer = "Hi, " + name + " , nice to meet you!";
+        String answer = "Hi, " + name + ", nice to meet you!";
         log.info("[/start] Received from user " + name);
         sendMessage(chatId, answer);
         log.info("[/start] Replied to user " + name);
