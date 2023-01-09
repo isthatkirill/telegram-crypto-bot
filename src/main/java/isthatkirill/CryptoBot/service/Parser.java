@@ -24,16 +24,47 @@ public class Parser {
                     "d-lg-inline " + "font-normal text-3xs tw-ml-0 md:tw-ml-2 md:tw-self-center tw-text-gray-500 " +
                             "dark:tw-text-white dark:tw-text-opacity-60").text()).split(" ")));
 
-            ArrayList<String> price = new ArrayList<String>(Arrays.asList((document.getElementsByAttribute("data" +
+            ArrayList<String> price = new ArrayList<>(Arrays.asList((document.getElementsByAttribute("data" +
                     "-coin-symbol").text()).split("  ")));
 
+            ArrayList<String> data24h = new ArrayList<>(Arrays.asList((document.getElementsByAttributeValue("data-" +
+                    "24h", "true").text()).split(" ")));
+
             for (int i = 0; i < quantity; i++) {
-                textToSend = textToSend + name.get(i) + ": " + price.get(i) + "\n";
+                textToSend = textToSend + name.get(i) + ": " + price.get(i) + " (" + data24h.get(i) + ")\n\n";
             }
 
         } catch (Exception e) {
             log.error("Error while parsing: " + e.getMessage());
         }
+        return textToSend;
+    }
+
+    public String gainers (int quantity) {
+
+        String textToSend = "";
+
+        try {
+            Document document = Jsoup.connect("https://www.coingecko.com/en/crypto-gainers-losers").get();
+
+            ArrayList<String> name = new ArrayList<>(Arrays.asList((document.getElementsByAttributeValue("class",
+                    "d-lg-inline font-normal text-3xs tw-ml-0 md:tw-ml-2 md:tw-self-center tw-text-gray-500 " +
+                            "dark:tw-text-white dark:tw-text-opacity-60").text()).split(" ")));
+
+            ArrayList<String> price = new ArrayList<>(Arrays.asList((document.getElementsByAttribute("data" +
+                    "-coin-symbol").text()).split("  ")));
+
+            ArrayList<String> data24h = new ArrayList<>(Arrays.asList((document.getElementsByAttributeValue("data-" +
+                    "24h", "true").text()).split(" ")));
+
+            for (int i = 0; i < quantity; i++) {
+                textToSend = textToSend + name.get(i) + ": " + price.get(i) + " (" + data24h.get(i) + ")\n\n";
+            }
+
+        } catch (Exception e) {
+            log.error("Error while parsing: " + e.getMessage());
+        }
+
         return textToSend;
     }
 

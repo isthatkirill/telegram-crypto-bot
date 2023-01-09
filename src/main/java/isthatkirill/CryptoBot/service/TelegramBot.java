@@ -30,11 +30,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         parser = new Parser();
         this.config = config;
         List<BotCommand> listOfCommands = new ArrayList<>();
+        parser.gainers(10); //TODO
 
         listOfCommands.add(new BotCommand("/start", "Get a welcome message"));
         listOfCommands.add(new BotCommand("/top10", "Show statistics on 10 most popular crypto"));
         listOfCommands.add(new BotCommand("/showall", "Show statistics on top-100 crypto"));
-        listOfCommands.add(new BotCommand("/deletedata", "delete your data"));
+        listOfCommands.add(new BotCommand("/gainers", "Gainers,  based on price movements in the last 24 hours."));
         listOfCommands.add(new BotCommand("/help", "about commands"));
         listOfCommands.add(new BotCommand("/settings", "set your preferences"));
 
@@ -80,7 +81,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage(chatId, parser.mostPopularCrypto(10));
                 log.info("[/top10] Replied to user " + update.getMessage().getChat().getFirstName());
 
-            } else {
+            } else if ("/gainers".equals(messageText)) {
+                sendMessage(chatId, parser.gainers(10));
+            }
+            else {
                 sendMessage(chatId, "Sorry, there is no such command! ");
                 log.info("[no command] Replied to user " + update.getMessage().getChat().getFirstName());
             }
