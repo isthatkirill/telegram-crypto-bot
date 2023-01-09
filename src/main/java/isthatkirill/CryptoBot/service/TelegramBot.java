@@ -30,7 +30,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         parser = new Parser();
         this.config = config;
         List<BotCommand> listOfCommands = new ArrayList<>();
-        parser.gainersAndLosers(10); //TODO
+        parser.makingUrl(); //TODO
 
         listOfCommands.add(new BotCommand("/start", "Get a welcome message"));
         listOfCommands.add(new BotCommand("/top10", "Show statistics on 10 most popular crypto"));
