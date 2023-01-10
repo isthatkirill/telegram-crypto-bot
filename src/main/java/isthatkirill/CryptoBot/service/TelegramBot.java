@@ -37,8 +37,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         listOfCommands.add(new BotCommand("/showall", "Show statistics on top-100 crypto"));
         listOfCommands.add(new BotCommand("/gainers", "Gainers,  based on price movements in the last 24 hours."));
         listOfCommands.add(new BotCommand("/losers", "Losers,  based on price movements in the last 24 hours."));
-        listOfCommands.add(new BotCommand("/help", "about commands"));
-        listOfCommands.add(new BotCommand("/settings", "set your preferences"));
+        listOfCommands.add(new BotCommand("/help", "About commands"));
+        listOfCommands.add(new BotCommand("/settings", "Set your preferences"));
+        listOfCommands.add(new BotCommand("/news", "News in crypto industry"));
 
 
         try {
