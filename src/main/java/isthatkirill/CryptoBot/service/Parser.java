@@ -1,5 +1,6 @@
 package isthatkirill.CryptoBot.service;
 
+import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -75,11 +76,18 @@ public class Parser {
         
         if (quantity > 0) {
             for (int i = 0; i < quantity; i++) {
-                textToSend = textToSend + name.get(i) + ": " + price.get(i) + " (" + data24h.get(i) + ")\n\n";
+                if (data24h.get(i).startsWith("-")) {
+                    textToSend = textToSend + EmojiParser.parseToUnicode(":red_circle: ") + name.get(i) + ": " +
+                            price.get(i) + " (" + data24h.get(i) + ")\n\n";
+                } else {
+                    textToSend = textToSend + EmojiParser.parseToUnicode("\uD83D\uDFE2 ") + name.get(i) +
+                            ": " + price.get(i) + " (" + data24h.get(i) + ")\n\n";
+                }
             }
         } else if (quantity < 0) {
             for (int i = name.size() / 2; i < name.size() / 2 - quantity; i++) {
-                textToSend = textToSend + name.get(i) + ": " + price.get(i) + " (" + data24h.get(i) + ")\n\n";
+                textToSend = textToSend + EmojiParser.parseToUnicode(":red_circle: ") + name.get(i) + ": " +
+                        price.get(i) + " (" + data24h.get(i) + ")\n\n";
             }
         }
         return textToSend;

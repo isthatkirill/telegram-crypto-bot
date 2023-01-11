@@ -1,5 +1,6 @@
 package isthatkirill.CryptoBot.service;
 
+import com.vdurmont.emoji.EmojiParser;
 import isthatkirill.CryptoBot.config.BotConfig;
 import isthatkirill.CryptoBot.model.User;
 import isthatkirill.CryptoBot.model.UserRepository;
@@ -127,7 +128,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void startCommandReceived(long chatId, String name)  {
-        String answer = "Hi, " + name + ", nice to meet you!";
+        String answer = EmojiParser.parseToUnicode("Hi, " + name + ", nice to meet you!" + " :relaxed:");
         log.info("[/start] Received from user " + name);
         sendMessage(chatId, answer);
         log.info("[/start] Replied to user " + name);
