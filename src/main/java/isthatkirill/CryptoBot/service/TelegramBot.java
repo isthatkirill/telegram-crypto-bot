@@ -1,11 +1,15 @@
 package isthatkirill.CryptoBot.service;
 
 import isthatkirill.CryptoBot.config.BotConfig;
+import isthatkirill.CryptoBot.model.User;
+import isthatkirill.CryptoBot.model.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScope;
@@ -13,12 +17,16 @@ import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScope
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
+
+    @Autowired
+    private UserRepository userRepository;
 
     final BotConfig config;
     static final String HELP_TEXT = "This bot is created by \n @isthatkirill.";
@@ -30,7 +38,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         parser = new Parser();
         this.config = config;
         List<BotCommand> listOfCommands = new ArrayList<>();
-        parser.makingUrl(); //TODO
+         //TODO
 
         listOfCommands.add(new BotCommand("/start", "Get a welcome message"));
         listOfCommands.add(new BotCommand("/top10", "Show statistics on 10 most popular crypto"));
@@ -69,6 +77,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             long chatId = update.getMessage().getChatId();
 
             if ("/start".equals(messageText)) {
+                registerUser(update.getMessage());
                 startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
 
             } else if ("/help".equals(messageText)) {
@@ -95,6 +104,25 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage(chatId, "Sorry, there is no such command! ");
                 log.info("[no command] Replied to user " + update.getMessage().getChat().getFirstName());
             }
+        }
+    }
+
+    private void registerUser (Message message) {
+
+        if (userRepository.findById(message.getChatId()).isEmpty()) {
+            var chatId = message.getChatId();
+            var chat = message.getChat();
+
+            User user = new User();
+
+            user.setChatId(chatId);
+            user.setFirstName(chat.getFirstName());
+            user.setLastName(chat.getLastName());
+            user.setUserName(chat.getUserName());
+            user.setRegisteredAt(new Timestamp(System.currentTimeMillis()));
+
+            userRepository.save(user);
+            log.info("User saved: " + user);
         }
     }
 

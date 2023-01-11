@@ -59,7 +59,7 @@ public class Parser {
         }
     }
 
-    public String parse(Document document, int quantity) {
+    private String parse(Document document, int quantity) {
 
         String textToSend = "";
 
