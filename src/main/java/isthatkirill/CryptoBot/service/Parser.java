@@ -24,7 +24,7 @@ public class Parser {
                             "dark:tw-text-white dark:tw-text-opacity-60").text()).split(" ")));
 
             Elements urlsInfo = document.getElementsByAttributeValue("class",
-                    "tw-flex tw-items-start md:tw-flex-row tw-flex-col");//.attr("href");
+                    "tw-flex tw-items-start md:tw-flex-row tw-flex-col");
 
             for (int i = 0; i < name.size(); i++) {
                 links.put(name.get(i), urlsInfo.get(i).attr("href"));
@@ -35,7 +35,7 @@ public class Parser {
         }
     }
 
-    public String mostPopularCrypto (int quantity) {
+    public String mostPopularCrypto(int quantity) {
 
         try {
             Document document = Jsoup.connect("https://www.coingecko.com/").get();
@@ -48,7 +48,7 @@ public class Parser {
 
     }
 
-    public String gainersAndLosers (int quantity) {
+    public String gainersAndLosers(int quantity) {
 
         try {
             Document document = Jsoup.connect("https://www.coingecko.com/en/crypto-gainers-losers").get();
@@ -73,7 +73,7 @@ public class Parser {
 
         ArrayList<String> data24h = new ArrayList<>(Arrays.asList((document.getElementsByAttributeValue("data-" +
                 "24h", "true").text()).split(" ")));
-        
+
         if (quantity > 0) {
             for (int i = 0; i < quantity; i++) {
                 if (data24h.get(i).startsWith("-")) {
