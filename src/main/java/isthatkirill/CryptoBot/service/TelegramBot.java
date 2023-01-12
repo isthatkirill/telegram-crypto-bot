@@ -170,15 +170,32 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         if (update.getMessage().getText().equals("/top10")) {
             row.add("Show more");
+            row.add("Go back");
             keyboardRows.add(row);
         } else if (update.getMessage().getText().equals("/help")) {
             row.add("Show author");
+            row.add("Go back");
             keyboardRows.add(row);
         } else if (update.getMessage().getText().equals("/gainers")) {
             row.add("Show more gainers");
+            row.add("Go back");
             keyboardRows.add(row);
         } else if (update.getMessage().getText().equals("/losers")) {
             row.add("Show more losers");
+            row.add("Go back");
+            keyboardRows.add(row);
+        } else if (update.getMessage().getText().equals("/start") || update.getMessage().getText().equals("Show more") ||
+                update.getMessage().getText().equals("Show more gainers") || update.getMessage().getText().equals("Show " +
+                "more losers") || update.getMessage().getText().equals("Show author") ||
+                update.getMessage().getText().equals("Go back")) {
+            row.add("/top10");
+            row.add("/gainers");
+            row.add("/losers");
+            keyboardRows.add(row);
+            row = new KeyboardRow();
+            row.add("/help");
+            row.add("/settings");
+            row.add("/news");
             keyboardRows.add(row);
         } else {
             ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove(true);
