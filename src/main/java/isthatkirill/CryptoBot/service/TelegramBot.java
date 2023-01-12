@@ -111,6 +111,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             } else if ("Show author".equals(messageText)) {
                 sendMessage(chatId, HELP_TEXT, update);
                 log.info("[Show author] Replied to user " + update.getMessage().getChat().getFirstName());
+            } else if ("Go back".equals(messageText)) {
+                sendMessage(chatId,  "Type command or press button -->", update);
+                log.info("[Show author] Replied to user " + update.getMessage().getChat().getFirstName());
             }
             else {
                 sendMessage(chatId, "Sorry, there is no such command! ", update);
@@ -164,7 +167,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         keyboardMarkup.setResizeKeyboard(true);
-        keyboardMarkup.setOneTimeKeyboard(true);
+        //keyboardMarkup.setOneTimeKeyboard(true);
+        keyboardMarkup.setIsPersistent(true);
         List<KeyboardRow> keyboardRows = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
 
