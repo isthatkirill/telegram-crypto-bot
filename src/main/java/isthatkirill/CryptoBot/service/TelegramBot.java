@@ -22,6 +22,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -123,12 +124,57 @@ public class TelegramBot extends TelegramLongPollingBot {
             } else if ("/news".equals(messageText)) {
                 sendMessage(chatId,  parser.news(), update);
                 log.info("[/news] Replied to user " + update.getMessage().getChat().getFirstName());
-            }
-            else {
+
+            } else if ("/settings".equals(messageText)) {
+                sendMessage(chatId,  "Select an action -->", update);
+                log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
+
+            } else if ("Add crypto in favourite list".equals(messageText)) {
+                sendMessage(chatId,  "Type cryptocurrency code (BTC, ETH, etc).", update);
+                log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
+
+            } else if ("Clear favourite list".equals(messageText)) {
+                clearList(update);
+                sendMessage(chatId,  "Favourite list have been cleared.", update);
+                log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
+
+            } else if ("Show favourite list".equals(messageText)) {
+
+                sendMessage(chatId,  showList(update), update);
+                log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
+
+            } else if (parser.getLinks().containsKey(messageText)) {
+                addInFavList(update);
+                String textToSend = messageText + " saved in your favourite list.";
+                sendMessage(chatId,  textToSend, update);
+                log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
+
+            } else {
                 sendMessage(chatId, "Sorry, there is no such command! ", update);
                 log.info("[no command] Replied to user " + update.getMessage().getChat().getFirstName());
             }
         }
+    }
+
+    private String showList(Update update) {
+        Optional<User> optUser = userRepository.findById(update.getMessage().getChatId());
+        User user = optUser.get();
+        return user.getCrypto();
+    }
+
+    private void clearList(Update update) {
+        Optional<User> optUser = userRepository.findById(update.getMessage().getChatId());
+        User user = optUser.get();
+        user.setCrypto("");
+        userRepository.save(user);
+    }
+
+    private void addInFavList(Update update) {
+        Optional<User> optUser = userRepository.findById(update.getMessage().getChatId());
+        User user = optUser.get();
+        String beforeUpdate = user.getCrypto();
+        user.setCrypto(beforeUpdate + update.getMessage().getText() + ",");
+        userRepository.save(user);
     }
 
     private void registerUser(Message message) {
@@ -197,10 +243,21 @@ public class TelegramBot extends TelegramLongPollingBot {
             row.add("Show more losers");
             row.add("Go back");
             keyboardRows.add(row);
-        } else if (update.getMessage().getText().equals("/start") || update.getMessage().getText().equals("Show more") ||
-                update.getMessage().getText().equals("Show more gainers") || update.getMessage().getText().equals("Show " +
-                "more losers") || update.getMessage().getText().equals("Show author") ||
-                update.getMessage().getText().equals("Go back") || update.getMessage().getText().equals("/news")) {
+        } else if (update.getMessage().getText().equals("/settings")) {
+            row.add("Add crypto in favourite list");
+            row.add("Clear favourite list");
+            row.add("Show favourite list");
+            keyboardRows.add(row);
+        } else if (update.getMessage().getText().equals("/start") ||
+                update.getMessage().getText().equals("Show more") ||
+                update.getMessage().getText().equals("Show more gainers") ||
+                update.getMessage().getText().equals("Show more losers") ||
+                update.getMessage().getText().equals("Show author") ||
+                update.getMessage().getText().equals("Go back") ||
+                update.getMessage().getText().equals("/news") ||
+                update.getMessage().getText().equals("Clear favourite list") ||
+                update.getMessage().getText().equals("Show favourite list") ||
+                parser.getLinks().containsKey(update.getMessage().getText())) {
             row.add("/top10");
             row.add("/gainers");
             row.add("/losers");

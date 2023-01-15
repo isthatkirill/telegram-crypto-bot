@@ -14,7 +14,7 @@ import java.util.HashMap;
 @Slf4j
 public class Parser {
 
-    private static final HashMap<String, String> links = new HashMap<>();
+    private final HashMap<String, String> links = new HashMap<>();
 
     public Parser() {
         try {
@@ -120,5 +120,9 @@ public class Parser {
             }
         }
         return textToSend;
+    }
+
+    public HashMap<String, String> getLinks() {
+        return links;
     }
 }

@@ -18,6 +18,16 @@ public class User {
 
     private Timestamp registeredAt;
 
+    private String crypto;
+
+    public String getCrypto() {
+        return crypto;
+    }
+
+    public void setCrypto(String crypto) {
+        this.crypto = crypto;
+    }
+
     public long getChatId() {
         return chatId;
     }
@@ -66,6 +76,7 @@ public class User {
                 ", lastName='" + lastName + '\'' +
                 ", userName='" + userName + '\'' +
                 ", registeredAt=" + registeredAt +
+                ", crypto='" + crypto + '\'' +
                 '}';
     }
 }
