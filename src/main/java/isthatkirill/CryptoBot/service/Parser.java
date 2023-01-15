@@ -1,85 +1,61 @@
 package isthatkirill.CryptoBot.service;
 
 import com.vdurmont.emoji.EmojiParser;
+import isthatkirill.CryptoBot.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @Slf4j
 public class Parser {
 
     private final HashMap<String, String> links = new HashMap<>();
+    private final LinkedHashMap<String, ArrayList<String>> cryptoMap = new LinkedHashMap<>();
+    private final ParserInTime parserInTime = new ParserInTime();
+    private ArrayList<String> name;
+    private ArrayList<String> price;
+    private ArrayList<String> data24h;
 
     public Parser() {
-        try {
-            Document document = Jsoup.connect("https://www.coingecko.com/").get();
-
-            ArrayList<String> name = new ArrayList<>(Arrays.asList((document.getElementsByAttributeValue("class",
-                    "d-lg-inline font-normal text-3xs tw-ml-0 md:tw-ml-2 md:tw-self-center tw-text-gray-500 " +
-                            "dark:tw-text-white dark:tw-text-opacity-60").text()).split(" ")));
-
-            Elements urlsInfo = document.getElementsByAttributeValue("class",
-                    "tw-flex tw-items-start md:tw-flex-row tw-flex-col");
-
-            for (int i = 0; i < name.size(); i++) {
-                links.put(name.get(i), urlsInfo.get(i).attr("href"));
-            }
-
-        } catch (Exception e) {
-            log.error("Error while parsing: " + e.getMessage());
-        }
+        parseHrefs();
     }
 
     public String mostPopularCrypto(int quantity) {
-
-        try {
-            Document document = Jsoup.connect("https://www.coingecko.com/").get();
-            return parse(document, quantity);
-
-        } catch (Exception e) {
-            log.error("Error while parsing: " + e.getMessage());
-            return null;
-        }
-
+        parse(false);
+        return display(quantity);
     }
 
     public String gainersAndLosers(int quantity) {
+        parse(true);
+        return display(quantity);
+    }
 
-        try {
-            Document document = Jsoup.connect("https://www.coingecko.com/en/crypto-gainers-losers").get();
-            return parse(document, quantity);
+    public String favCrypto(User user) {
+        mostPopularCrypto(100);
+        String textToSend = "";
+        ArrayList<String> userCrypto = new ArrayList<>(Arrays.asList(user.getCrypto().split(",")));
 
-        } catch (Exception e) {
-            log.error("Error while parsing: " + e.getMessage());
-            return null;
+        for (String each : userCrypto) {
+            if (cryptoMap.get(each).get(1).startsWith("-")) {
+                textToSend = textToSend + EmojiParser.parseToUnicode(":red_circle: ") + each + ": " +
+                        cryptoMap.get(each).get(0) + " (" + cryptoMap.get(each).get(1) + ")\n\n";
+            } else {
+                textToSend = textToSend + EmojiParser.parseToUnicode("\uD83D\uDFE2 ") + each + ": " +
+                        cryptoMap.get(each).get(0) + " (" + cryptoMap.get(each).get(1) + ")\n\n";
+            }
         }
+        return textToSend;
     }
 
     public String news() {
-
-        try {
-            Document document = Jsoup.connect("https://cryptonews.net/ru/").get();
-            return parseNews(document);
-
-        } catch (Exception e) {
-            log.error("Error while parsing: " + e.getMessage());
-            return null;
-        }
-
-    }
-
-    private String parseNews(Document document) {
-
         String textToSend = "";
-
-        Elements titles = document.select("body > main > div.container > div.content.row > " +
-                "section.col-xs-12.col-sm > div.row.news-item.start-xs > div.desc.col-xs > a.title");
+        Elements titles = parserInTime.getNewsInfo();
 
         for (Element element : titles) {
             textToSend += element.text() + "\n" + "https://cryptonews.net" + element.attr("href") + "\n\n";
@@ -88,20 +64,36 @@ public class Parser {
         return textToSend;
     }
 
+    public HashMap<String, String> getLinks() {
+        return links;
+    }
 
-    private String parse(Document document, int quantity) {
+    private void parseHrefs() {
+        ArrayList<String> title = parserInTime.getCryptoNames(false);
+        Elements urlsInfo = parserInTime.getHref();
+
+        for (int i = 0; i < title.size(); i++) {
+            links.put(title.get(i), urlsInfo.get(i).attr("href"));
+        }
+    }
+
+    private void parse(Boolean isGainer) {
+
+        name = parserInTime.getCryptoNames(isGainer);
+        price = parserInTime.getCryptoPrices(isGainer);
+        data24h = parserInTime.getCrypto24hChange(isGainer);
+
+        for (int i = 0; i < name.size(); i++) {
+            ArrayList<String> temp = new ArrayList<>();
+            temp.add(price.get(i));
+            temp.add(data24h.get(i));
+            cryptoMap.put(name.get(i), temp);
+        }
+    }
+
+    private String display(int quantity) {
 
         String textToSend = "";
-
-        ArrayList<String> name = new ArrayList<>(Arrays.asList((document.getElementsByAttributeValue("class",
-                "d-lg-inline font-normal text-3xs tw-ml-0 md:tw-ml-2 md:tw-self-center tw-text-gray-500 " +
-                        "dark:tw-text-white dark:tw-text-opacity-60").text()).split(" ")));
-
-        ArrayList<String> price = new ArrayList<>(Arrays.asList((document.getElementsByAttribute("data" +
-                "-coin-symbol").text()).split("  ")));
-
-        ArrayList<String> data24h = new ArrayList<>(Arrays.asList((document.getElementsByAttributeValue("data-" +
-                "24h", "true").text()).split(" ")));
 
         if (quantity > 0) {
             for (int i = 0; i < quantity; i++) {
@@ -119,10 +111,8 @@ public class Parser {
                         price.get(i) + " (" + data24h.get(i) + ")\n\n";
             }
         }
+
         return textToSend;
     }
 
-    public HashMap<String, String> getLinks() {
-        return links;
-    }
 }
