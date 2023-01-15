@@ -42,6 +42,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     public TelegramBot(BotConfig config) {
 
         parser = new Parser();
+
+
+        parser.news();
+
         this.config = config;
         List<BotCommand> listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/start", "Get a welcome message"));
@@ -111,9 +115,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             } else if ("Show author".equals(messageText)) {
                 sendMessage(chatId, HELP_TEXT, update);
                 log.info("[Show author] Replied to user " + update.getMessage().getChat().getFirstName());
+
             } else if ("Go back".equals(messageText)) {
                 sendMessage(chatId,  "Type command or press button -->", update);
                 log.info("[Show author] Replied to user " + update.getMessage().getChat().getFirstName());
+
+            } else if ("/news".equals(messageText)) {
+                sendMessage(chatId,  parser.news(), update);
+                log.info("[/news] Replied to user " + update.getMessage().getChat().getFirstName());
             }
             else {
                 sendMessage(chatId, "Sorry, there is no such command! ", update);
@@ -191,7 +200,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.getMessage().getText().equals("/start") || update.getMessage().getText().equals("Show more") ||
                 update.getMessage().getText().equals("Show more gainers") || update.getMessage().getText().equals("Show " +
                 "more losers") || update.getMessage().getText().equals("Show author") ||
-                update.getMessage().getText().equals("Go back")) {
+                update.getMessage().getText().equals("Go back") || update.getMessage().getText().equals("/news")) {
             row.add("/top10");
             row.add("/gainers");
             row.add("/losers");

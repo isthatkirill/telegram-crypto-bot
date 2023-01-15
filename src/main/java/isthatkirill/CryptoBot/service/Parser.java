@@ -4,6 +4,7 @@ import com.vdurmont.emoji.EmojiParser;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
@@ -59,6 +60,34 @@ public class Parser {
             return null;
         }
     }
+
+    public String news() {
+
+        try {
+            Document document = Jsoup.connect("https://cryptonews.net/ru/").get();
+            return parseNews(document);
+
+        } catch (Exception e) {
+            log.error("Error while parsing: " + e.getMessage());
+            return null;
+        }
+
+    }
+
+    private String parseNews(Document document) {
+
+        String textToSend = "";
+
+        Elements titles = document.select("body > main > div.container > div.content.row > " +
+                "section.col-xs-12.col-sm > div.row.news-item.start-xs > div.desc.col-xs > a.title");
+
+        for (Element element : titles) {
+            textToSend += element.text() + "\n" + "https://cryptonews.net" + element.attr("href") + "\n\n";
+        }
+
+        return textToSend;
+    }
+
 
     private String parse(Document document, int quantity) {
 
