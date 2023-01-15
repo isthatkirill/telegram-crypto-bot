@@ -139,13 +139,20 @@ public class TelegramBot extends TelegramLongPollingBot {
                 log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("Show favourite list".equals(messageText)) {
-
-                sendMessage(chatId,  showList(update), update);
+                if (showList(update).length() == 0) {
+                    sendMessage(chatId, "Favourite list is empty.", update);
+                } else {
+                    sendMessage(chatId,  showList(update), update);
+                }
                 log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else if (parser.getLinks().containsKey(messageText)) {
-                addInFavList(update);
-                String textToSend = messageText + " saved in your favourite list.";
+                String textToSend;
+                if (addInFavList(update)) {
+                    textToSend = messageText + " saved in your favourite list.";
+                } else {
+                    textToSend = messageText + " already in your favourite list.";
+                }
                 sendMessage(chatId,  textToSend, update);
                 log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
 
@@ -169,12 +176,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         userRepository.save(user);
     }
 
-    private void addInFavList(Update update) {
+    private boolean addInFavList(Update update) {
+        boolean flag = false;
         Optional<User> optUser = userRepository.findById(update.getMessage().getChatId());
         User user = optUser.get();
         String beforeUpdate = user.getCrypto();
-        user.setCrypto(beforeUpdate + update.getMessage().getText() + ",");
+        if (!beforeUpdate.contains(update.getMessage().getText())) {
+            user.setCrypto(beforeUpdate + update.getMessage().getText() + ",");
+            flag = true;
+        }
         userRepository.save(user);
+        return flag;
     }
 
     private void registerUser(Message message) {
@@ -248,16 +260,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             row.add("Clear favourite list");
             row.add("Show favourite list");
             keyboardRows.add(row);
-        } else if (update.getMessage().getText().equals("/start") ||
-                update.getMessage().getText().equals("Show more") ||
-                update.getMessage().getText().equals("Show more gainers") ||
-                update.getMessage().getText().equals("Show more losers") ||
-                update.getMessage().getText().equals("Show author") ||
-                update.getMessage().getText().equals("Go back") ||
-                update.getMessage().getText().equals("/news") ||
-                update.getMessage().getText().equals("Clear favourite list") ||
-                update.getMessage().getText().equals("Show favourite list") ||
-                parser.getLinks().containsKey(update.getMessage().getText())) {
+        } else {
             row.add("/top10");
             row.add("/gainers");
             row.add("/losers");
@@ -267,12 +270,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             row.add("/settings");
             row.add("/news");
             keyboardRows.add(row);
-        } else {
-            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove(true);
-            message.setReplyMarkup(replyKeyboardRemove);
-            return;
         }
-
         keyboardMarkup.setKeyboard(keyboardRows);
         message.setReplyMarkup(keyboardMarkup);
 
