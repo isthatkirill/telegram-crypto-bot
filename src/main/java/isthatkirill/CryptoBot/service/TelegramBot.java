@@ -15,14 +15,12 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -129,7 +127,11 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             } else if ("/favourite".equals(messageText)) {
                 User user = userRepository.findById(update.getMessage().getChatId()).get();
-                sendMessage(chatId, parser.favCrypto(user), update);
+                if (user.getCrypto().length() == 0) {
+                    sendMessage(chatId, "Your favourite list is empty.", update);
+                } else {
+                    sendMessage(chatId, parser.favCrypto(user), update);
+                }
                 log.info("[] Replied/favourite to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("Add crypto in favourite list".equals(messageText)) {
@@ -179,10 +181,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean addInFavList(Update update) {
         boolean flag = false;
         User user = userRepository.findById(update.getMessage().getChatId()).get();
+
         String beforeUpdate = user.getCrypto();
         if (!beforeUpdate.contains(update.getMessage().getText())) {
             user.setCrypto(beforeUpdate + update.getMessage().getText() + ",");
             flag = true;
+        } else if (beforeUpdate == null) {
+            user.setCrypto(update.getMessage().getText() + ",");
         }
         userRepository.save(user);
         return flag;
@@ -201,6 +206,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setLastName(chat.getLastName());
             user.setUserName(chat.getUserName());
             user.setRegisteredAt(new Timestamp(System.currentTimeMillis()));
+            user.setCrypto("");
 
             userRepository.save(user);
             log.info("User saved: " + user);
