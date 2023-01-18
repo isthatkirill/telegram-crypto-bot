@@ -10,11 +10,14 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -37,6 +40,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             "\n\n/settings - set your preferences" +
             "\n\n/news - last news in crypto industry";
     Parser parser;
+    static final String AVAILABLE_CRYPTO = new ParserInTime().getCryptoNames(false).toString();
 
     public TelegramBot(BotConfig config) {
 
@@ -46,12 +50,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<BotCommand> listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/start", "Get a welcome message"));
         listOfCommands.add(new BotCommand("/top10", "Show statistics on 10 most popular crypto"));
+        listOfCommands.add(new BotCommand("/favourite", "Show cryptocurrencies added in favourites"));
         listOfCommands.add(new BotCommand("/gainers", "Gainers,  based on price movements in the last 24 hours."));
         listOfCommands.add(new BotCommand("/losers", "Losers,  based on price movements in the last 24 hours."));
+        listOfCommands.add(new BotCommand("/news", "News in crypto industry"));
         listOfCommands.add(new BotCommand("/help", "About commands"));
         listOfCommands.add(new BotCommand("/settings", "Set your preferences"));
-        listOfCommands.add(new BotCommand("/news", "News in crypto industry"));
-        listOfCommands.add(new BotCommand("/favourite", "Show cryptocurrencies added in favourites"));
 
         try {
             this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
@@ -114,15 +118,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                 log.info("[Show author] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("Go back".equals(messageText)) {
-                sendMessage(chatId,  "Type command or press button -->", update);
+                sendMessage(chatId, "Type command or press button -->", update);
                 log.info("[Show author] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("/news".equals(messageText)) {
-                sendMessage(chatId,  parser.news(), update);
+                sendMessage(chatId, parser.news(), update);
                 log.info("[/news] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("/settings".equals(messageText)) {
-                sendMessage(chatId,  "Select an action -->", update);
+                sendMessage(chatId, "Select an action -->", update);
                 log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("/favourite".equals(messageText)) {
@@ -135,19 +139,20 @@ public class TelegramBot extends TelegramLongPollingBot {
                 log.info("[] Replied/favourite to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("Add crypto in favourite list".equals(messageText)) {
-                sendMessage(chatId,  "Type cryptocurrency code (BTC, ETH, etc).", update);
+
+                showAvailableCryptoList(chatId);
                 log.info("[Add crypto in favourite list] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("Clear favourite list".equals(messageText)) {
                 clearList(update);
-                sendMessage(chatId,  "Favourite list have been cleared.", update);
+                sendMessage(chatId, "Favourite list have been cleared.", update);
                 log.info("[Clear favourite list] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else if ("Show favourite list".equals(messageText)) {
                 if (showList(update).length() == 0) {
                     sendMessage(chatId, "Favourite list is empty.", update);
                 } else {
-                    sendMessage(chatId,  showList(update), update);
+                    sendMessage(chatId, showList(update), update);
                 }
                 log.info("[Show favourite list] Replied to user " + update.getMessage().getChat().getFirstName());
 
@@ -158,14 +163,59 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } else {
                     textToSend = messageText + " already in your favourite list.";
                 }
-                sendMessage(chatId,  textToSend, update);
+                sendMessage(chatId, textToSend, update);
                 log.info("[BTC] Replied to user " + update.getMessage().getChat().getFirstName());
 
             } else {
                 sendMessage(chatId, "Sorry, there is no such command! ", update);
                 log.info("[no command] Replied to user " + update.getMessage().getChat().getFirstName());
             }
+        } else if (update.hasCallbackQuery()) {
+            String callBackData = update.getCallbackQuery().getData();
+            long messageId = update.getCallbackQuery().getMessage().getMessageId();
+            long chatId = update.getCallbackQuery().getMessage().getChatId();
+
+            if (callBackData.equals("SHOW_BUTTON")) {
+                String text = " ok";
+                EditMessageText editedMessage = new EditMessageText();
+                editedMessage.setChatId(String.valueOf(chatId));
+                editedMessage.setText(AVAILABLE_CRYPTO);
+                editedMessage.setMessageId((int) messageId);
+
+                try {
+                    execute(editedMessage);
+                } catch (TelegramApiException e) {
+                    log.error("Error occurred: " + e.getMessage());
+                }
+            }
         }
+    }
+
+    private void showAvailableCryptoList(long chatId) {
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+        message.setText("Type cryptocurrency code (BTC, ETH, etc).");
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
+        List<InlineKeyboardButton> rowInLine = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+
+        button.setText("Show available cryptocurrency list.");
+        button.setCallbackData("SHOW_BUTTON");
+
+        rowInLine.add(button);
+        rowsInLine.add(rowInLine);
+
+        inlineKeyboardMarkup.setKeyboard(rowsInLine);
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error("Error occurred: " + e.getMessage());
+        }
+
     }
 
     private String showList(Update update) {
@@ -239,7 +289,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         keyboardMarkup.setResizeKeyboard(true);
-        //keyboardMarkup.setOneTimeKeyboard(true);
         keyboardMarkup.setIsPersistent(true);
         List<KeyboardRow> keyboardRows = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
@@ -263,7 +312,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.getMessage().getText().equals("/settings")) {
             row.add("Add crypto in favourite list");
             row.add("Clear favourite list");
+            keyboardRows.add(row);
+            row = new KeyboardRow();
             row.add("Show favourite list");
+            row.add("Go back");
             keyboardRows.add(row);
         } else {
             row.add("/top10");

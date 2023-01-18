@@ -21,7 +21,17 @@ public class Parser {
     private ArrayList<String> price;
     private ArrayList<String> data24h;
 
+    public ArrayList<String> getName() {
+        return name;
+    }
+
+    public String getStringAvailableCryptoCurrency() {
+        System.out.println(name.toString());
+        return name.toString();
+    }
+
     public Parser() {
+
         parseHrefs();
     }
 
@@ -113,5 +123,6 @@ public class Parser {
 
         return textToSend;
     }
+
 
 }
