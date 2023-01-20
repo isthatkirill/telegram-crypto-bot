@@ -70,4 +70,21 @@ public class ParserInTime {
         return connectTo(topCryptoURL).getElementsByAttributeValue("class",
                 "tw-flex tw-items-start md:tw-flex-row tw-flex-col");
     }
+
+    public String getAvailableList() {
+        String textToSend = "";
+        int newLine = 0;
+        ArrayList<String> tokenList = getCryptoNames(false);
+        for (String tokenName : tokenList) {
+            textToSend = textToSend + tokenName + " ";
+            newLine++;
+            if (newLine == 5) {
+                textToSend = textToSend + "\n";
+                newLine = 0;
+            }
+        }
+        return textToSend;
+    }
+
+
 }
