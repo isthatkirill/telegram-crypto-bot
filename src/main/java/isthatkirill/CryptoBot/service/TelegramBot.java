@@ -1,12 +1,11 @@
 package isthatkirill.CryptoBot.service;
 
+
 import com.vdurmont.emoji.EmojiParser;
 import isthatkirill.CryptoBot.config.BotConfig;
 import isthatkirill.CryptoBot.model.User;
 import isthatkirill.CryptoBot.model.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -27,6 +26,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import static isthatkirill.CryptoBot.service.Constant.*;
+
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
@@ -35,15 +36,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private UserRepository userRepository;
 
     final BotConfig config;
-    static final String AUTHOR_INFO = "This bot is created by \n@isthatkirill.";
-    static final String COMMAND_TEXT = "/top10 -  get statistics on 10 most popular crypto (price, 24h-changes)" +
-            "\n\n/gainers - get top gainers (based on price movements in the last 24 hours)" +
-            "\n\n/losers - get top losers (based on price movements in the last 24 hours)" +
-            "\n\n/favourite - get statistics on your favourite tokens" +
-            "\n\n/settings - set your preferences" +
-            "\n\n/news - last news in crypto industry";
     Parser parser;
-    static final String AVAILABLE_CRYPTO = new ParserInTime().getAvailableList();
 
     public TelegramBot(BotConfig config) {
 
@@ -51,19 +44,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         this.config = config;
         List<BotCommand> listOfCommands = new ArrayList<>();
-        listOfCommands.add(new BotCommand("/start", "Get a welcome message"));
-        listOfCommands.add(new BotCommand("/top10", "Show statistics on 10 most popular crypto"));
-        listOfCommands.add(new BotCommand("/favourite", "Show cryptocurrencies added in favourites"));
-        listOfCommands.add(new BotCommand("/gainers", "Gainers,  based on price movements in the last 24 hours."));
-        listOfCommands.add(new BotCommand("/losers", "Losers,  based on price movements in the last 24 hours."));
-        listOfCommands.add(new BotCommand("/news", "News in crypto industry"));
-        listOfCommands.add(new BotCommand("/help", "About commands"));
-        listOfCommands.add(new BotCommand("/settings", "Set your preferences"));
+        listOfCommands.add(new BotCommand("/start", START_COMMAND_TEXT));
+        listOfCommands.add(new BotCommand("/top10", TOP10_COMMAND_TEXT));
+        listOfCommands.add(new BotCommand("/favourite", FAVOURITE_COMMAND_TEXT));
+        listOfCommands.add(new BotCommand("/gainers", GAINERS_COMMAND_TEXT));
+        listOfCommands.add(new BotCommand("/losers", LOSERS_COMMAND_TEXT));
+        listOfCommands.add(new BotCommand("/news", NEWS_COMMAND_TEXT));
+        listOfCommands.add(new BotCommand("/help", HELP_COMMAND_TEXT));
+        listOfCommands.add(new BotCommand("/settings", SETTINGS_COMMAND_TEXT));
 
         try {
             this.execute(new SetMyCommands(listOfCommands, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
-            log.error("Error setting bot command list: " + e.getMessage());
+            log.error(ERROR + e.getMessage());
         }
     }
 
@@ -86,303 +79,108 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             if ("/start".equals(messageText)) {
                 registerUser(update.getMessage());
-                startCommandReceived(chatId, update.getMessage().getChat().getFirstName(), update);
+                String name = update.getMessage().getChat().getFirstName();
+                sendMessage(chatId, EmojiParser.parseToUnicode("Hello, " + name + ", " + HI_MESSAGE), update);
+                log.info("[/start] " + REPLYED_TO_USER + name);
 
             } else if ("/help".equals(messageText)) {
-                showAuthor(chatId);
-                log.info("[/help] Replied to user " + update.getMessage().getChat().getFirstName());
+                inlineButtonCall(chatId, SHOW_AUTHOR);
+                log.info("[/help] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("/top10".equals(messageText)) {
-                showMoreCrypto(chatId);
-                log.info("[/top10] Replied to user " + update.getMessage().getChat().getFirstName());
+                inlineButtonCall(chatId, MORE_CRYPTO);
+                log.info("[/top10] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("/gainers".equals(messageText)) {
-                showMoreGainers(chatId);
-                log.info("[/gainers] Replied to user " + update.getMessage().getChat().getFirstName());
+                inlineButtonCall(chatId, MORE_GAINERS);
+                log.info("[/gainers] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("/losers".equals(messageText)) {
-                showMoreLosers(chatId);
-                log.info("[/losers] Replied to user " + update.getMessage().getChat().getFirstName());
+                inlineButtonCall(chatId, MORE_LOSERS);
+                log.info("[/losers] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("Show author".equals(messageText)) {
                 sendMessage(chatId, AUTHOR_INFO, update);
-                log.info("[Show author] Replied to user " + update.getMessage().getChat().getFirstName());
+                log.info("[Show author] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("Go back".equals(messageText)) {
-                sendMessage(chatId, "Type command or press button -->", update);
-                log.info("[Show author] Replied to user " + update.getMessage().getChat().getFirstName());
+                sendMessage(chatId, RECOMMEND_PRESSING_BUTTON, update);
+                log.info("[Show author] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("/news".equals(messageText)) {
                 sendMessage(chatId, parser.news(), update);
-                log.info("[/news] Replied to user " + update.getMessage().getChat().getFirstName());
+                log.info("[/news] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("/settings".equals(messageText)) {
-                sendMessage(chatId, "Select an action -->", update);
-                log.info("[/settings] Replied to user " + update.getMessage().getChat().getFirstName());
+                sendMessage(chatId, RECOMMEND_PRESSING_BUTTON, update);
+                log.info("[/settings] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("/favourite".equals(messageText)) {
                 User user = userRepository.findById(update.getMessage().getChatId()).get();
                 if (user.getCrypto().length() == 0) {
-                    sendMessage(chatId, "Your favourite list is empty. Please use /settings to set " +
-                            "your favourite tokens list.", update);
+                    sendMessage(chatId, COMMAND_FAVOURITE_LIST_EMPTY, update);
                 } else {
                     sendMessage(chatId, parser.favCrypto(user), update);
                 }
-                log.info("[] Replied/favourite to user " + update.getMessage().getChat().getFirstName());
+                log.info("[/favourite] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("Add crypto in favourite list".equals(messageText)) {
 
-                showAvailableCryptoList(chatId);
-                log.info("[Add crypto in favourite list] Replied to user " + update.getMessage().getChat().getFirstName());
+                inlineButtonCall(chatId, SHOW_AVAILABLE);
+                log.info("[Add crypto in favourite list] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("Clear favourite list".equals(messageText)) {
                 clearList(update);
-                sendMessage(chatId, "Favourite list have been cleared.", update);
-                log.info("[Clear favourite list] Replied to user " + update.getMessage().getChat().getFirstName());
+                sendMessage(chatId, LIST_CLEARED, update);
+                log.info("[Clear favourite list] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if ("Show favourite list".equals(messageText)) {
                 if (showList(update).length() == 0) {
-                    sendMessage(chatId, "Favourite list is empty.", update);
+                    sendMessage(chatId, LIST_EMPTY, update);
                 } else {
                     sendMessage(chatId, showList(update), update);
                 }
-                log.info("[Show favourite list] Replied to user " + update.getMessage().getChat().getFirstName());
+                log.info("[Show favourite list] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else if (parser.getLinks().containsKey(messageText)) {
                 String textToSend;
                 if (addInFavList(update)) {
-                    textToSend = messageText + " saved in your favourite list.";
+                    textToSend = messageText + LIST_SAVED;
                 } else {
-                    textToSend = messageText + " already in your favourite list.";
+                    textToSend = messageText + ALREADY_IN_LIST;
                 }
                 sendMessage(chatId, textToSend, update);
-                log.info("[BTC] Replied to user " + update.getMessage().getChat().getFirstName());
+                log.info("[BTC/ETH etc] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
 
             } else {
-                sendMessage(chatId, "Sorry, there is no such command! ", update);
-                log.info("[no command] Replied to user " + update.getMessage().getChat().getFirstName());
+                sendMessage(chatId, NO_COMMAND, update);
+                log.info("[no command] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
             }
+
         } else if (update.hasCallbackQuery()) {
             String callBackData = update.getCallbackQuery().getData();
             long messageId = update.getCallbackQuery().getMessage().getMessageId();
             long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-            if (callBackData.equals("SHOW_BUTTON")) {
-                EditMessageText editedMessage = new EditMessageText();
-                editedMessage.setChatId(String.valueOf(chatId));
-                editedMessage.setText(AVAILABLE_CRYPTO);
-                editedMessage.setMessageId((int) messageId);
+            EditMessageText editedMessage = new EditMessageText();
+            editedMessage.setChatId(String.valueOf(chatId));
+            editedMessage.setMessageId((int) messageId);
 
-                try {
-                    execute(editedMessage);
-                } catch (TelegramApiException e) {
-                    log.error("Error occurred: " + e.getMessage());
-                }
-
-            } else if (callBackData.equals("SHOW_AUTHOR")) {
-                EditMessageText editedMessage = new EditMessageText();
-                editedMessage.setChatId(String.valueOf(chatId));
-                editedMessage.setText(AUTHOR_INFO);
-                editedMessage.setMessageId((int) messageId);
-
-                try {
-                    execute(editedMessage);
-                } catch (TelegramApiException e) {
-                    log.error("Error occurred: " + e.getMessage());
-                }
-
-            } else if (callBackData.equals("MORE_CRYPTO")) {
-                EditMessageText editedMessage = new EditMessageText();
-                editedMessage.setChatId(String.valueOf(chatId));
-                editedMessage.setText(parser.mostPopularCrypto(100));
-                editedMessage.setMessageId((int) messageId);
-
-                try {
-                    execute(editedMessage);
-                } catch (TelegramApiException e) {
-                    log.error("Error occurred: " + e.getMessage());
-                }
-
-            } else if (callBackData.equals("MORE_GAINERS")) {
-                EditMessageText editedMessage = new EditMessageText();
-                editedMessage.setChatId(String.valueOf(chatId));
-                editedMessage.setText(parser.gainersAndLosers(25));
-                editedMessage.setMessageId((int) messageId);
-
-                try {
-                    execute(editedMessage);
-                } catch (TelegramApiException e) {
-                    log.error("Error occurred: " + e.getMessage());
-                }
-            } else if (callBackData.equals("MORE_LOSERS")) {
-                EditMessageText editedMessage = new EditMessageText();
-                editedMessage.setChatId(String.valueOf(chatId));
-                editedMessage.setText(parser.gainersAndLosers(-25));
-                editedMessage.setMessageId((int) messageId);
-
-                try {
-                    execute(editedMessage);
-                } catch (TelegramApiException e) {
-                    log.error("Error occurred: " + e.getMessage());
-                }
+            switch (callBackData) {
+                case SHOW_AVAILABLE -> editedMessage.setText(AVAILABLE_CRYPTO);
+                case SHOW_AUTHOR -> editedMessage.setText(AUTHOR_INFO);
+                case MORE_CRYPTO -> editedMessage.setText(parser.mostPopularCrypto(100));
+                case MORE_GAINERS -> editedMessage.setText(parser.gainersAndLosers(25));
+                case MORE_LOSERS -> editedMessage.setText(parser.gainersAndLosers(-25));
             }
+
+            try {
+                execute(editedMessage);
+            } catch (TelegramApiException e) {
+                log.error(ERROR + e.getMessage());
+            }
+
         }
-    }
-
-    private void showMoreLosers(long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(parser.gainersAndLosers(-10));
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
-        List<InlineKeyboardButton> rowInLine = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton();
-
-        button.setText("Show more losers");
-        button.setCallbackData("MORE_LOSERS");
-
-        rowInLine.add(button);
-        rowsInLine.add(rowInLine);
-
-        inlineKeyboardMarkup.setKeyboard(rowsInLine);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
-        }
-    }
-
-    private void showMoreGainers(long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(parser.gainersAndLosers(10));
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
-        List<InlineKeyboardButton> rowInLine = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton();
-
-        button.setText("Show more gainers");
-        button.setCallbackData("MORE_GAINERS");
-
-        rowInLine.add(button);
-        rowsInLine.add(rowInLine);
-
-        inlineKeyboardMarkup.setKeyboard(rowsInLine);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
-        }
-    }
-
-    private void showAvailableCryptoList(long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText("Type cryptocurrency code (BTC, ETH, etc).");
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
-        List<InlineKeyboardButton> rowInLine = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton();
-
-        button.setText("Show available cryptocurrency list.");
-        button.setCallbackData("SHOW_BUTTON");
-
-        rowInLine.add(button);
-        rowsInLine.add(rowInLine);
-
-        inlineKeyboardMarkup.setKeyboard(rowsInLine);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
-        }
-
-    }
-
-    private void showMoreCrypto(long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(parser.mostPopularCrypto(10));
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
-        List<InlineKeyboardButton> rowInLine = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton();
-
-        button.setText("Show more");
-        button.setCallbackData("MORE_CRYPTO");
-
-        rowInLine.add(button);
-        rowsInLine.add(rowInLine);
-
-        inlineKeyboardMarkup.setKeyboard(rowsInLine);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
-        }
-    }
-
-    private void showAuthor(long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(String.valueOf(chatId));
-        message.setText(COMMAND_TEXT);
-
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
-        List<InlineKeyboardButton> rowInLine = new ArrayList<>();
-        InlineKeyboardButton button = new InlineKeyboardButton();
-
-        button.setText("Show author");
-        button.setCallbackData("SHOW_AUTHOR");
-
-        rowInLine.add(button);
-        rowsInLine.add(rowInLine);
-
-        inlineKeyboardMarkup.setKeyboard(rowsInLine);
-        message.setReplyMarkup(inlineKeyboardMarkup);
-
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
-        }
-    }
-
-    private String showList(Update update) {
-        return userRepository.findById(update.getMessage().getChatId()).get().getCrypto();
-    }
-
-    private void clearList(Update update) {
-        User user = userRepository.findById(update.getMessage().getChatId()).get();
-        user.setCrypto("");
-        userRepository.save(user);
-    }
-
-    private boolean addInFavList(Update update) {
-        boolean flag = false;
-        User user = userRepository.findById(update.getMessage().getChatId()).get();
-
-        String beforeUpdate = user.getCrypto();
-        if (!beforeUpdate.contains(update.getMessage().getText())) {
-            user.setCrypto(beforeUpdate + update.getMessage().getText() + ",");
-            flag = true;
-        } else if (beforeUpdate == null) {
-            user.setCrypto(update.getMessage().getText() + ",");
-        }
-        userRepository.save(user);
-        return flag;
     }
 
     private void registerUser(Message message) {
@@ -405,14 +203,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void startCommandReceived(long chatId, String name, Update update) {
-        String answer = EmojiParser.parseToUnicode("Hello, " + name + ", i'm a CryptoStatistics bot!" + " :relaxed:" +
-                "\nType /help to see available commands. ");
-        log.info("[/start] Received from user " + name);
-        sendMessage(chatId, answer, update);
-        log.info("[/start] Replied to user " + name);
-    }
-
     private void sendMessage(long chatId, String textToSend, Update update) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -420,11 +210,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         showButtons(update, message);
 
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
-        }
+        executeMessage(message);
     }
 
     private void showButtons(Update update, SendMessage message) {
@@ -458,5 +244,84 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         keyboardMarkup.setKeyboard(keyboardRows);
         message.setReplyMarkup(keyboardMarkup);
+    }
+
+    private void inlineButtonCall(long chatId, String action) {
+        SendMessage message = new SendMessage();
+        message.setChatId(String.valueOf(chatId));
+
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
+        List<InlineKeyboardButton> rowInLine = new ArrayList<>();
+        InlineKeyboardButton button = new InlineKeyboardButton();
+
+        switch (action) {
+            case MORE_LOSERS -> {
+                message.setText(parser.gainersAndLosers(-10));
+                button.setCallbackData(MORE_LOSERS);
+                button.setText(MORE_LOSERS_TEXT);
+            }
+            case MORE_GAINERS -> {
+                message.setText(parser.gainersAndLosers(10));
+                button.setText(MORE_GAINERS_TEXT);
+                button.setCallbackData(MORE_GAINERS);
+            }
+            case SHOW_AVAILABLE -> {
+                message.setText(TYPE_TOKEN_CODE);
+                button.setText(SHOW_AVAILABLE_TEXT);
+                button.setCallbackData(SHOW_AVAILABLE);
+            }
+            case MORE_CRYPTO -> {
+                message.setText(parser.mostPopularCrypto(10));
+                button.setText(MORE_CRYPTO_TEXT);
+                button.setCallbackData(MORE_CRYPTO);
+            }
+            case SHOW_AUTHOR -> {
+                message.setText(COMMAND_TEXT);
+                button.setText(SHOW_AUTHOR_TEXT);
+                button.setCallbackData(SHOW_AUTHOR);
+            }
+        }
+
+        rowInLine.add(button);
+        rowsInLine.add(rowInLine);
+
+        inlineKeyboardMarkup.setKeyboard(rowsInLine);
+        message.setReplyMarkup(inlineKeyboardMarkup);
+
+        executeMessage(message);
+    }
+
+    private void executeMessage(SendMessage message) {
+        try {
+            execute(message);
+        } catch (TelegramApiException e) {
+            log.error(ERROR + e.getMessage());
+        }
+    }
+
+    private String showList(Update update) {
+        return userRepository.findById(update.getMessage().getChatId()).get().getCrypto();
+    }
+
+    private void clearList(Update update) {
+        User user = userRepository.findById(update.getMessage().getChatId()).get();
+        user.setCrypto("");
+        userRepository.save(user);
+    }
+
+    private boolean addInFavList(Update update) {
+        boolean flag = false;
+        User user = userRepository.findById(update.getMessage().getChatId()).get();
+
+        String beforeUpdate = user.getCrypto();
+        if (!beforeUpdate.contains(update.getMessage().getText())) {
+            user.setCrypto(beforeUpdate + update.getMessage().getText() + ",");
+            flag = true;
+        } else if (beforeUpdate == null) {
+            user.setCrypto(update.getMessage().getText() + ",");
+        }
+        userRepository.save(user);
+        return flag;
     }
 }
