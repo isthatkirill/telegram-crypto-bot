@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import static isthatkirill.CryptoBot.service.Constant.ParserConstants.NEWS_URL;
+
 @Slf4j
 public class Parser {
 
@@ -67,7 +69,7 @@ public class Parser {
         Elements titles = parserInTime.getNewsInfo();
 
         for (Element element : titles) {
-            textToSend += element.text() + "\n" + "https://cryptonews.net" + element.attr("href") + "\n\n";
+            textToSend += element.text() + "\n" +  NEWS_URL + element.attr("href") + "\n\n";
         }
 
         return textToSend;

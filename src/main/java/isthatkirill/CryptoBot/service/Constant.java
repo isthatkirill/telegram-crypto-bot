@@ -43,6 +43,21 @@ public final class Constant {
     static final String ERROR = "Error occurred: ";
     static final String TYPE_TOKEN_CODE = "Type cryptocurrency code (BTC, ETH, etc).";
 
+    final class ParserConstants {
+        static final String topCryptoURL = "https://www.coingecko.com/";
+        static final String gainersAndLosersURL = "https://www.coingecko.com/en/crypto-gainers-losers";
+        static final String newsURL = "https://cryptonews.net/ru/";
+        static final String eachCryptoURL = "https://www.coingecko.com/";
+        static final String NAMES_PATH = "d-lg-inline font-normal text-3xs tw-ml-0 md:tw-ml-2 md:tw-self-center " +
+                "tw-text-gray-500 dark:tw-text-white dark:tw-text-opacity-60";
+        static final String PRICE_PATH = "data-coin-symbol";
+        static final String NEWS_PATH = "body > main > div.container > div.content.row > section.col-xs-12.col-sm > " +
+                "div.row.news-item.start-xs > div.desc.col-xs > a.title";
+        static final String CHANGES_PER_DAY_PATH = "data-24h";
+        static final String TOKEN_URL =  "tw-flex tw-items-start md:tw-flex-row tw-flex-col";
+        static final String NEWS_URL = "https://cryptonews.net";
+    }
+
     private Constant() {
     }
 }

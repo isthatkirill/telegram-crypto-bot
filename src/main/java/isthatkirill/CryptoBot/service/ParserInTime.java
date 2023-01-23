@@ -7,68 +7,60 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
+
+import static isthatkirill.CryptoBot.service.Constant.ERROR;
+import static isthatkirill.CryptoBot.service.Constant.ParserConstants.*;
 
 @Slf4j
 public class ParserInTime {
 
-    private final String topCryptoURL = "https://www.coingecko.com/";
-    private final String gainersAndLosersURL = "https://www.coingecko.com/en/crypto-gainers-losers";
-    private final String newsURL = "https://cryptonews.net/ru/";
-    private final String eachCryptoURL = "https://www.coingecko.com/";
-
-
     private Document connectTo(String link) {
         try {
-            Document document = Jsoup.connect(link).get();
-            return document;
+            return Jsoup.connect(link).get();
 
         } catch (Exception e) {
-            log.error("Error while parsing: " + e.getMessage());
+            log.error(ERROR + e.getMessage());
             return null;
         }
     }
 
     public ArrayList<String> getCryptoNames(Boolean isGainer) {
         if (isGainer) {
-            return new ArrayList<>(Arrays.asList((connectTo(gainersAndLosersURL).getElementsByAttributeValue("class",
-                    "d-lg-inline font-normal text-3xs tw-ml-0 md:tw-ml-2 md:tw-self-center tw-text-gray-500 " +
-                            "dark:tw-text-white dark:tw-text-opacity-60").text()).split(" ")));
-        }
-        else {
-            return new ArrayList<>(Arrays.asList((connectTo(topCryptoURL).getElementsByAttributeValue("class",
-                    "d-lg-inline font-normal text-3xs tw-ml-0 md:tw-ml-2 md:tw-self-center tw-text-gray-500 " +
-                            "dark:tw-text-white dark:tw-text-opacity-60").text()).split(" ")));
+            return new ArrayList<>(Arrays.asList((Objects.requireNonNull(connectTo(gainersAndLosersURL))
+                    .getElementsByAttributeValue("class", NAMES_PATH).text()).split(" ")));
+        } else {
+            return new ArrayList<>(Arrays.asList((Objects.requireNonNull(connectTo(topCryptoURL))
+                    .getElementsByAttributeValue("class", NAMES_PATH).text()).split(" ")));
         }
     }
 
     public ArrayList<String> getCryptoPrices(Boolean isGainer) {
         if (isGainer) {
-            return new ArrayList<>(Arrays.asList((connectTo(gainersAndLosersURL).getElementsByAttribute("data" +
-                    "-coin-symbol").text()).split("  ")));
+            return new ArrayList<>(Arrays.asList((Objects.requireNonNull(connectTo(gainersAndLosersURL)).
+                    getElementsByAttribute(PRICE_PATH).text()).split("  ")));
         } else {
-            return new ArrayList<>(Arrays.asList((connectTo(topCryptoURL).getElementsByAttribute("data" +
-                    "-coin-symbol").text()).split("  ")));
+            return new ArrayList<>(Arrays.asList((Objects.requireNonNull(connectTo(topCryptoURL)).
+                    getElementsByAttribute(PRICE_PATH).text()).split("  ")));
         }
     }
 
     public ArrayList<String> getCrypto24hChange(Boolean isGainer) {
         if (isGainer) {
-            return new ArrayList<>(Arrays.asList((connectTo(gainersAndLosersURL).getElementsByAttributeValue("data-" +
-                    "24h", "true").text()).split(" ")));
+            return new ArrayList<>(Arrays.asList((Objects.requireNonNull(connectTo(gainersAndLosersURL))
+                    .getElementsByAttributeValue(CHANGES_PER_DAY_PATH, "true").text()).split(" ")));
         } else {
-            return new ArrayList<>(Arrays.asList((connectTo(topCryptoURL).getElementsByAttributeValue("data-" +
-                    "24h", "true").text()).split(" ")));
+            return new ArrayList<>(Arrays.asList((Objects.requireNonNull(connectTo(topCryptoURL))
+                    .getElementsByAttributeValue(CHANGES_PER_DAY_PATH, "true").text()).split(" ")));
         }
     }
 
     public Elements getNewsInfo() {
-        return connectTo(newsURL).select("body > main > div.container > div.content.row > " +
-                "section.col-xs-12.col-sm > div.row.news-item.start-xs > div.desc.col-xs > a.title");
+        return Objects.requireNonNull(connectTo(newsURL)).select(NEWS_PATH);
     }
 
     public Elements getHref() {
-        return connectTo(topCryptoURL).getElementsByAttributeValue("class",
-                "tw-flex tw-items-start md:tw-flex-row tw-flex-col");
+        return Objects.requireNonNull(connectTo(topCryptoURL)).getElementsByAttributeValue("class", TOKEN_URL);
     }
 
     public String getAvailableList() {
