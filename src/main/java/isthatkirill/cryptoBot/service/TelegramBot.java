@@ -1,10 +1,11 @@
-package isthatkirill.CryptoBot.service;
+package isthatkirill.cryptoBot.service;
 
 
 import com.vdurmont.emoji.EmojiParser;
-import isthatkirill.CryptoBot.config.BotConfig;
-import isthatkirill.CryptoBot.model.User;
-import isthatkirill.CryptoBot.model.UserRepository;
+import isthatkirill.cryptoBot.config.BotConfig;
+import isthatkirill.cryptoBot.exception.UserNotFoundException;
+import isthatkirill.cryptoBot.model.User;
+import isthatkirill.cryptoBot.model.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import static isthatkirill.CryptoBot.service.Constant.*;
+import static isthatkirill.cryptoBot.util.Constant.*;
 
 @Slf4j
 @Component
@@ -34,15 +35,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Autowired
     private UserRepository userRepository;
-
-    final BotConfig config;
-    Parser parser;
+    private final BotConfig config;
+    private final Parser parser;
 
     public TelegramBot(BotConfig config) {
-
         parser = new Parser();
-
         this.config = config;
+
         List<BotCommand> listOfCommands = new ArrayList<>();
         listOfCommands.add(new BotCommand("/start", START_COMMAND_TEXT));
         listOfCommands.add(new BotCommand("/top10", TOP10_COMMAND_TEXT));
@@ -76,63 +75,66 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
+            String firstName = update.getMessage().getChat().getFirstName();
 
             if ("/start".equals(messageText)) {
                 registerUser(update.getMessage());
                 String name = update.getMessage().getChat().getFirstName();
-                sendMessage(chatId, EmojiParser.parseToUnicode("Hello, " + name + ", " + HI_MESSAGE), update);
-                log.info("[/start] " + REPLYED_TO_USER + name);
+                sendMessage(chatId, EmojiParser.parseToUnicode("Hello, " + name + ", " + HI_MESSAGE),
+                        update);
+                log.info("[/start] {} {}",REPLYED_TO_USER, name);
 
             } else if ("/help".equals(messageText)) {
                 inlineButtonCall(chatId, SHOW_AUTHOR);
-                log.info("[/help] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[/help] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("/top10".equals(messageText)) {
                 inlineButtonCall(chatId, MORE_CRYPTO);
-                log.info("[/top10] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[/top10] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("/gainers".equals(messageText)) {
                 inlineButtonCall(chatId, MORE_GAINERS);
-                log.info("[/gainers] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[/gainers] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("/losers".equals(messageText)) {
                 inlineButtonCall(chatId, MORE_LOSERS);
-                log.info("[/losers] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[/losers] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("Show author".equals(messageText)) {
                 sendMessage(chatId, AUTHOR_INFO, update);
-                log.info("[Show author] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[Show author] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("Go back".equals(messageText)) {
                 sendMessage(chatId, RECOMMEND_PRESSING_BUTTON, update);
-                log.info("[Show author] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[Show author] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("/news".equals(messageText)) {
                 sendMessage(chatId, parser.news(), update);
-                log.info("[/news] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[/news] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("/settings".equals(messageText)) {
                 sendMessage(chatId, RECOMMEND_PRESSING_BUTTON, update);
-                log.info("[/settings] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[/settings] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("/favourite".equals(messageText)) {
-                User user = userRepository.findById(update.getMessage().getChatId()).get();
-                if (user.getCrypto().length() == 0) {
+                Long id = update.getMessage().getChatId();
+                User user = checkUserExistent(id);
+                if (user.getCrypto().isEmpty()) {
                     sendMessage(chatId, COMMAND_FAVOURITE_LIST_EMPTY, update);
                 } else {
                     sendMessage(chatId, parser.favCrypto(user), update);
                 }
-                log.info("[/favourite] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[/favourite] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("Add crypto in favourite list".equals(messageText)) {
 
                 inlineButtonCall(chatId, SHOW_AVAILABLE);
-                log.info("[Add crypto in favourite list] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[Add crypto in favourite list] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("Clear favourite list".equals(messageText)) {
                 clearList(update);
                 sendMessage(chatId, LIST_CLEARED, update);
-                log.info("[Clear favourite list] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[Clear favourite list] {} {}", REPLYED_TO_USER, firstName);
 
             } else if ("Show favourite list".equals(messageText)) {
                 if (showList(update).length() == 0) {
@@ -140,7 +142,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } else {
                     sendMessage(chatId, showList(update), update);
                 }
-                log.info("[Show favourite list] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[Show favourite list] {} {}", REPLYED_TO_USER, firstName);
 
             } else if (parser.getLinks().containsKey(messageText)) {
                 String textToSend;
@@ -150,11 +152,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                     textToSend = messageText + ALREADY_IN_LIST;
                 }
                 sendMessage(chatId, textToSend, update);
-                log.info("[BTC/ETH etc] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[BTC/ETH etc] {} {}", REPLYED_TO_USER, firstName);
 
             } else {
                 sendMessage(chatId, NO_COMMAND, update);
-                log.info("[no command] " + REPLYED_TO_USER + update.getMessage().getChat().getFirstName());
+                log.info("[no command] {} {}", REPLYED_TO_USER, firstName);
             }
 
         } else if (update.hasCallbackQuery()) {
@@ -199,7 +201,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setCrypto("");
 
             userRepository.save(user);
-            log.info("User saved: " + user);
+            log.info("User saved: {}", user);
         }
     }
 
@@ -299,18 +301,18 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String showList(Update update) {
-        return userRepository.findById(update.getMessage().getChatId()).get().getCrypto();
+        return checkUserExistent(update.getMessage().getChatId()).getCrypto();
     }
 
     private void clearList(Update update) {
-        User user = userRepository.findById(update.getMessage().getChatId()).get();
+        User user = checkUserExistent(update.getMessage().getChatId());
         user.setCrypto("");
         userRepository.save(user);
     }
 
     private boolean addInFavList(Update update) {
         boolean flag = false;
-        User user = userRepository.findById(update.getMessage().getChatId()).get();
+        User user = checkUserExistent(update.getMessage().getChatId());
 
         String beforeUpdate = user.getCrypto();
         if (!beforeUpdate.contains(update.getMessage().getText())) {
@@ -321,5 +323,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         userRepository.save(user);
         return flag;
+    }
+
+    private User checkUserExistent(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User with id=" + id + " not found"));
     }
 }

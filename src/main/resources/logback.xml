@@ -20,7 +20,7 @@
         </encoder>
     </appender>
 
-    <logger name="isthatkirill.CryptoBot" level="debug" additivity="false">
+    <logger name="isthatkirill.cryptoBot" level="debug" additivity="false">
         <appender-ref ref="FILE-ROLLING"/>
     </logger>
 

@@ -1,8 +1,8 @@
-package isthatkirill.CryptoBot.config;
+package isthatkirill.cryptoBot.config;
 
-import isthatkirill.CryptoBot.service.TelegramBot;
+import isthatkirill.cryptoBot.service.TelegramBot;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -12,10 +12,10 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class BotInitializer {
 
-    @Autowired
-    TelegramBot bot;
+    private final TelegramBot bot;
 
     @EventListener({ContextRefreshedEvent.class})
     public void init() throws TelegramApiException {
@@ -23,8 +23,7 @@ public class BotInitializer {
         try {
             telegramBotsApi.registerBot(bot);
         } catch (TelegramApiException e) {
-            log.error("Error occurred: " + e.getMessage());
+            log.error("Error occurred: {}", e.getMessage());
         }
     }
-
 }
